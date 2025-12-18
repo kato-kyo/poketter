@@ -57,7 +57,7 @@ if (flutterVersionName == null) {
 
 android {
     namespace "net.sukekyo.poketter"
-    compileSdk flutter.compileSdkVersion
+    compileSdk 36
     ndkVersion flutter.ndkVersion
 
     compileOptions {
@@ -76,7 +76,7 @@ android {
     defaultConfig {
         applicationId "${dartDefines.appId}"
         minSdkVersion 23
-        targetSdkVersion flutter.targetSdkVersion
+        targetSdkVersion 36
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         resValue "string", "app_name", "${dartDefines.appName}"

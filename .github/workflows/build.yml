@@ -1,0 +1,53 @@
+name: build Check
+
+on: [ workflow_dispatch ]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # fvmのバージョンを取得
+      - name: Read flutter version from fvm config
+        id: flutter_info
+        run: |
+          FLUTTER_VERSION=$(jq -r ".flutter" .fvmrc)
+          echo "FLUTTER_VERSION=$FLUTTER_VERSION" >> $GITHUB_ENV
+        shell: bash
+
+      # Flutterのセットアップ
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: main
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Keystore の設定
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/release.keystore
+
+      - name: Create key.properties
+        run: |
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=release.keystore
+          EOF
+
+      - name: Run build
+        run: flutter build apk --release --dart-define-from-file=dart_define/dev.env
+
+      - name: Upload apk file
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: build/app/outputs/flutter-apk/*.apk
